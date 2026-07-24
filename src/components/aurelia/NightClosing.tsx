@@ -46,18 +46,35 @@ export function NightClosing() {
           const N = NIGHT
           const pin = isDesktop ? N.pinDesktop : isTablet ? N.pinTablet : N.pinMobile
 
-          // The bar travels from fully off the left edge to fully off the right.
-          const barWidth = () => shutter.getBoundingClientRect().width
-          const travelFrom = () => -barWidth()
-          const travelTo = () => stage.clientWidth
+          /* -- geometry -------------------------------------------------
+             The night plate is unmasked left → right over [maskAt, maskAt+mask].
+             The bar is driven at exactly the same velocity, offset so that its
+             centre sits on the reveal edge for the whole crossing — the seam
+             between the two buildings is never outside the bar. It enters and
+             leaves fully off-screen, which is why its tween is longer than the
+             mask's on both sides. */
+          const barW = shutter.offsetWidth || stage.clientWidth * 0.18
+          const ratio = barW / Math.max(1, stage.clientWidth)
 
-          // The reveal edge tracks the bar's centre. Over the bar's full travel
-          // (stageW + barW) the centre crosses the stage between these two
-          // normalized times, so the mask runs on exactly that sub-window and
-          // the seam never leaves the bar.
-          const span = 1 + N.shutterWidth
-          const maskStart = N.shutterWidth / 2 / span
-          const maskDuration = 1 / span
+          const shutterFrom = () => -shutter.offsetWidth * 1.5
+          const shutterTo = () => stage.clientWidth + shutter.offsetWidth * 1.5
+          const shutterAt = N.maskAt - N.mask * ratio
+          const shutterDuration = N.mask * (1 + 3 * ratio)
+
+          // The moment the night plate has fully covered the daylight one.
+          const coveredAt = N.maskAt + N.mask
+
+          /* -- starting state -------------------------------------------
+             The night plate is present and painted from the start; only its
+             mask hides it. It is never revealed by opacity. */
+          gsap.set('.night__layer--night', {
+            autoAlpha: 1,
+            visibility: 'visible',
+            clipPath: 'inset(0% 100% 0% 0%)',
+          })
+          gsap.set('.night__layer--day', { autoAlpha: 1, visibility: 'visible' })
+          gsap.set(shutter, { x: shutterFrom, yPercent: 0 })
+          gsap.set('.night__darken', { opacity: 0 })
 
           const timeline = gsap.timeline({
             scrollTrigger: {
@@ -78,56 +95,63 @@ export function NightClosing() {
             },
           })
 
-          // 1 — the daylight plate dims. Peaks at 0.42: dusk, not black.
-          timeline.fromTo(
+          // 1 — the daylight plate dims slightly. Dusk, never black.
+          timeline.to(
             '.night__darken',
-            { opacity: 0 },
-            { opacity: N.dimTo, ease: EASE.frame, duration: N.dimIn },
+            { opacity: N.dimTo, ease: 'none', duration: N.dimIn },
             0,
           )
 
-          // 2 — the bar crosses the frame. Scrubbed movement is linear.
-          const travelAt = N.dimIn
-          timeline.fromTo(
-            shutter,
-            { x: travelFrom },
-            { x: travelTo, ease: 'none', duration: N.shutter },
-            travelAt,
-          )
-
-          // 3 — the night plate is unmasked behind the bar's centre.
+          // 2 — the night plate is unmasked left → right.
           timeline.fromTo(
             '.night__layer--night',
             { clipPath: 'inset(0% 100% 0% 0%)' },
-            { clipPath: 'inset(0% 0% 0% 0%)', ease: 'none', duration: N.shutter * maskDuration },
-            travelAt + N.shutter * maskStart,
+            { clipPath: 'inset(0% 0% 0% 0%)', ease: 'none', duration: N.mask },
+            N.maskAt,
           )
 
-          // 4 — the night image settles from a slight scale (its only scale tween).
+          // 3 — the bar rides the reveal edge, hiding the seam.
+          timeline.fromTo(
+            shutter,
+            { x: shutterFrom },
+            { x: shutterTo, ease: 'none', duration: shutterDuration },
+            shutterAt,
+          )
+
+          // 4 — the night image settles from a slight scale (its only tween).
           timeline.fromTo(
             '.night__layer--night .media__inner',
             { scale: N.nightScaleFrom },
-            { scale: 1, ease: 'none', duration: N.shutter },
-            travelAt,
+            { scale: 1, ease: 'none', duration: N.mask },
+            N.maskAt,
           )
 
-          // 5 — the dim is released, so it is at 0 over the finished night scene.
+          // 5 — the dim is released, so it ends at exactly 0 over the night scene.
           timeline.to(
             '.night__darken',
-            { opacity: 0, ease: EASE.frame, duration: N.shutter * 0.45 },
-            travelAt + N.shutter * 0.45,
+            { opacity: 0, ease: 'none', duration: N.dimOut },
+            N.dimOutAt,
           )
 
-          // 6 — heading + CTA once the night image is mostly visible.
+          // 6 — heading + CTA once the night image is mostly visible. Copy is an
+          // independent layer, so expressive easing is fine here.
           timeline.fromTo(
             '.night__reveal',
-            { autoAlpha: 0, y: 30 },
-            { autoAlpha: 1, y: 0, ease: EASE.settle, duration: 0.45, stagger: 0.1 },
-            travelAt + N.shutter * N.copyAt,
+            { autoAlpha: 0, y: 24 },
+            { autoAlpha: 1, y: 0, ease: EASE.settle, duration: N.copyDuration, stagger: 0.07 },
+            N.copyAt,
           )
 
-          // 7 — stable final hold before the pin releases.
-          timeline.to({}, { duration: N.holdFinal }, travelAt + N.shutter + 0.05)
+          // 7 — only once the night plate completely covers it does the daylight
+          // plate leave the compositor. Never before.
+          timeline.set(
+            '.night__layer--day',
+            { autoAlpha: 0, visibility: 'hidden' },
+            coveredAt,
+          )
+
+          // 8 — stable final hold before the pin releases.
+          timeline.to({}, { duration: N.holdFinal }, shutterAt + shutterDuration)
         },
       )
 

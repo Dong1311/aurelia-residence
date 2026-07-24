@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { heroImageReady } from '@/lib/ready'
 
 interface MediaProps {
@@ -24,6 +24,12 @@ interface MediaProps {
    * Journey, Gallery and NightClosing so a scene never fights its own load-in.
    */
   motion?: boolean
+  /**
+   * Rendered inside the frame, as a sibling of the transform wrapper — so it is
+   * clipped by the frame's mask but unaffected by the image's transform. Used
+   * for per-scene scrims.
+   */
+  children?: ReactNode
 }
 
 function cx(...classes: Array<string | false | undefined>): string {
@@ -53,6 +59,7 @@ export function Media({
   quality = 82,
   signalReady = false,
   motion = false,
+  children,
 }: MediaProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [loaded, setLoaded] = useState(false)
@@ -92,6 +99,7 @@ export function Media({
           onError={handleSettled}
         />
       </div>
+      {children}
     </div>
   )
 }

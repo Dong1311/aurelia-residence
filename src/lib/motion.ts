@@ -35,19 +35,27 @@ export const CLIP = {
   hiddenBottom: 'inset(0% 0% 100% 0%)', // reveals downward as the bottom inset shrinks
 } as const
 
-/** Spatial journey — three phases per room: settle → passage → arrival. */
+/**
+ * Spatial journey — three phases per room: settle → passage → arrival.
+ *
+ * `settle` (holdOpen / dwell) and `arrival` are deliberately *empty* time: the
+ * scene is completely static, which is what makes each room readable. All the
+ * movement lives in `passage`, and every image is touched by exactly one tween
+ * for its whole life (its passage scale-in), so nothing can ever overlap.
+ */
 export const JOURNEY = {
-  holdOpen: 0.6, // the first room holds, static, before anything moves
-  dwell: 0.9, // a room's on-screen settle (position drift only)
-  passage: 1.2, // mask reveal + the incoming image's single scale-in
+  holdOpen: 0.3, // the first room holds, static, before anything moves
+  dwell: 0.5, // a room's static settle
+  passage: 0.8, // mask reveal + the incoming image's single scale-in
+  arrival: 0.35, // caption resolves and the room stabilises
   arrivalAt: 0.62, // caption + tick flip at 62% of the passage (>60% revealed)
-  holdFinal: 0.9, // the last room holds before the pin releases
+  holdFinal: 0.4, // the last room holds before the pin releases
   incomingScale: 1.04, // incoming image starts here and settles to 1
-  drift: 1.8, // yPercent settle drift within a room
+  drift: 1.5, // incoming yPercent offset, settled to 0 by the same tween
   /** Scroll distance per room, as a percentage of the viewport. */
   perChapterDesktop: 74,
-  perChapterTablet: 62,
-  perChapterMobile: 46,
+  perChapterTablet: 60,
+  perChapterMobile: 44,
 } as const
 
 /** Hero → Statement continuous shared-element sequence. */
@@ -78,15 +86,18 @@ export const GALLERY = {
  * overlay can never sit on top of the finished night scene.
  */
 export const NIGHT = {
-  dimTo: 0.42, // how far the daylight plate dims — never to black
-  dimIn: 0.35, // duration of the dim-in
-  shutter: 1.6, // the bar's full travel, left edge → right edge
-  shutterWidth: 0.34, // fraction of stage width (34vw, inside the 28–40vw band)
-  nightScaleFrom: 1.05, // the night image settles from here to 1
-  copyAt: 0.8, // heading + CTA once the night image is mostly visible
-  holdFinal: 0.6,
+  dimTo: 0.38, // how far the daylight plate dims — never to black
+  dimIn: 0.2, // duration of the dim-in
+  maskAt: 0.18, // the night plate starts unmasking here
+  mask: 0.8, // and takes this long to cross the frame
+  nightScaleFrom: 1.04, // the night image settles from here to 1
+  dimOutAt: 0.76, // the dim is released before the end…
+  dimOut: 0.18, // …so it finishes at exactly 0
+  copyAt: 0.74, // heading + CTA once the night image is mostly visible
+  copyDuration: 0.3,
+  holdFinal: 0.25,
   /** Pin distance as a percentage of the viewport. */
   pinDesktop: 90,
-  pinTablet: 80,
-  pinMobile: 66,
+  pinTablet: 78,
+  pinMobile: 65,
 } as const

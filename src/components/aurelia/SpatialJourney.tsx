@@ -67,7 +67,21 @@ export function SpatialJourney() {
           select('.journey__chapter').forEach((chapter, index) => {
             gsap.set(chapter, { zIndex: index + 1 })
           })
-          gsap.set(frames.slice(1), { clipPath: CLIP.hiddenTop })
+
+          // Only the first room exists as a painted layer. Every other frame is
+          // `visibility: hidden`, so the compositor does not hold five
+          // full-viewport image layers for the length of the pin.
+          gsap.set(frames[0] ?? {}, {
+            autoAlpha: 1,
+            visibility: 'visible',
+            clipPath: CLIP.shown,
+          })
+          gsap.set(frames.slice(1), {
+            autoAlpha: 0,
+            visibility: 'hidden',
+            clipPath: CLIP.hiddenTop,
+          })
+          gsap.set(inners.filter(Boolean), { scale: 1, yPercent: 0, willChange: 'auto' })
           gsap.set(captions.slice(1), { autoAlpha: 0, y: 28 })
 
           /* -- driver --------------------------------------------------- */
@@ -95,10 +109,6 @@ export function SpatialJourney() {
               scrub: SCRUB.pinned,
               invalidateOnRefresh: true,
               refreshPriority: 2,
-              // Promote the five image layers only while the journey is in
-              // play; holding five full-viewport composited layers for the
-              // whole page is a lot of GPU memory for nothing.
-              onToggle: (self) => root.classList.toggle('is-playing', self.isActive),
               onUpdate: (self) => {
                 const tl = self.animation as gsap.core.Timeline | undefined
                 if (!tl) return
@@ -117,79 +127,76 @@ export function SpatialJourney() {
             },
           })
 
-          /* -- opening hold + room 0 settle ----------------------------- */
+          /* -- opening settle ------------------------------------------- */
 
-          // Room 0 is static from 0 → holdOpen (holds before the first passage),
-          // then drifts gently in place (position only — never scale).
-          let at = J.holdOpen
-          if (inners[0]) {
-            timeline.fromTo(
-              inners[0],
-              { yPercent: 0 },
-              { yPercent: drift, ease: EASE.drift, duration: J.dwell },
-              at,
-            )
-          }
+          // Room 0 is completely static for holdOpen + dwell. A hold is empty
+          // time, not a slow tween — nothing is animating, so nothing can drop
+          // a frame while the visitor reads it.
           timeline.addLabel(CHAPTERS[0]?.name.toLowerCase() ?? 'room-0', 0)
-          at += J.dwell
+          let at = J.holdOpen + J.dwell
 
           /* -- one passage per room boundary ---------------------------- */
 
           for (let i = 0; i < count - 1; i += 1) {
-            const passStart = at
+            const transitionStart = at
+            const transitionEnd = transitionStart + J.passage
+            const arrivalEnd = transitionEnd + J.arrival
+
+            const outFrame = frames[i]
             const outInner = inners[i]
             const inFrame = frames[i + 1]
             const inInner = inners[i + 1]
             const outCap = captions[i]
             const inCap = captions[i + 1]
 
-            // Outgoing room keeps drifting (position only) as it is covered.
-            if (outInner) {
-              timeline.to(
-                outInner,
-                { yPercent: drift * 1.7, ease: EASE.drift, duration: J.passage },
-                passStart,
-              )
+            /* the incoming frame joins the compositor only now ---------- */
+            if (inFrame) {
+              timeline.set(inFrame, { autoAlpha: 1, visibility: 'visible' }, transitionStart)
             }
 
-            // Outgoing caption leaves in the first part of the passage.
-            if (outCap) {
-              timeline.to(
-                outCap,
-                { autoAlpha: 0, y: -24, ease: EASE.exit, duration: J.passage * 0.4 },
-                passStart,
-              )
+            // Exactly two transform layers are promoted, and only for as long
+            // as they are actually moving.
+            const promote = [outInner, inInner].filter(Boolean)
+            if (promote.length) {
+              timeline.set(promote, { willChange: 'transform' }, transitionStart)
             }
 
-            // The mask carries the transition — the frame is the only thing clipped.
+            /* the mask carries the transition — linear, scroll-locked ---- */
             if (inFrame) {
               timeline.fromTo(
                 inFrame,
                 { clipPath: CLIP.hiddenTop },
-                { clipPath: CLIP.shown, ease: EASE.frame, duration: J.passage },
-                passStart,
+                { clipPath: CLIP.shown, ease: 'none', duration: J.passage },
+                transitionStart,
               )
             }
 
-            // The incoming image's ONE and only scale tween, plus a small settle
-            // in position. It finishes at passStart + passage, well before the
-            // next passage (passStart + passage + dwell).
+            // The incoming image's ONE and only tween, for its entire life.
+            // The outgoing image is not animated at all while it is covered.
             if (inInner) {
               timeline.fromTo(
                 inInner,
                 { scale: J.incomingScale, yPercent: -drift },
-                { scale: 1, yPercent: 0, ease: EASE.settle, duration: J.passage },
-                passStart,
+                { scale: 1, yPercent: 0, ease: 'none', duration: J.passage },
+                transitionStart,
               )
             }
 
-            // Arrival: caption appears once ≥60% of the new image is revealed.
-            const arrivalTime = passStart + J.passage * J.arrivalAt
+            /* captions are an independent layer — expressive easing is fine */
+            if (outCap) {
+              timeline.to(
+                outCap,
+                { autoAlpha: 0, y: -24, ease: EASE.exit, duration: J.passage * 0.4 },
+                transitionStart,
+              )
+            }
+
+            const arrivalTime = transitionStart + J.passage * J.arrivalAt
             if (inCap) {
               timeline.fromTo(
                 inCap,
                 { autoAlpha: 0, y: 28 },
-                { autoAlpha: 1, y: 0, ease: EASE.settle, duration: J.dwell * 0.7 },
+                { autoAlpha: 1, y: 0, ease: EASE.settle, duration: J.arrival },
                 arrivalTime,
               )
             }
@@ -199,19 +206,21 @@ export function SpatialJourney() {
               arrivalTime,
             )
 
-            at = passStart + J.passage
-
-            // Incoming room settle drift (position only) — begins only after its
-            // scale-in has completely finished.
-            if (inInner) {
-              timeline.fromTo(
-                inInner,
-                { yPercent: 0 },
-                { yPercent: drift, ease: EASE.drift, duration: J.dwell },
-                at,
-              )
+            /* the incoming frame now covers the outgoing one completely, so
+               the outgoing frame can leave the compositor entirely --------- */
+            if (outFrame) {
+              timeline.set(outFrame, { autoAlpha: 0, visibility: 'hidden' }, transitionEnd)
             }
-            at += J.dwell
+            if (outInner) {
+              timeline.set(outInner, { willChange: 'auto' }, transitionEnd)
+            }
+            // Once the new room has settled it is static, so it does not need a
+            // composited layer either.
+            if (inInner) {
+              timeline.set(inInner, { willChange: 'auto' }, arrivalEnd)
+            }
+
+            at = arrivalEnd + J.dwell
           }
 
           // Stable final hold before the pin releases.
@@ -219,7 +228,6 @@ export function SpatialJourney() {
 
           return () => {
             setFill(0)
-            root.classList.remove('is-playing')
             ticks.forEach((tick, index) =>
               tick.setAttribute('data-active', index === 0 ? 'true' : 'false'),
             )
@@ -246,9 +254,14 @@ export function SpatialJourney() {
                 src={imageSrc(chapter.asset)}
                 alt={imageAlt(chapter.asset)}
                 sizes="100vw"
-                // Static opening crop per room — no longer animated.
+                // Static opening crop per room — never animated.
                 style={{ '--frame-from': chapter.framing.from } as React.CSSProperties}
-              />
+              >
+                {/* Inside the frame, so it is clipped with the image, but a
+                    sibling of the transform wrapper so the image's scale never
+                    stretches the gradient. */}
+                <div className="journey__scrim" aria-hidden="true" />
+              </Media>
               <div className="journey__caption">
                 <p className="journey__index">
                   <span>Chapter {chapter.index}</span>

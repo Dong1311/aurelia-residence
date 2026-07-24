@@ -945,14 +945,13 @@
   clip-path: inset(0% 0% 0% 0%);
 }
 
-/* The inner wrapper is the only transformed layer (scale + drift); the frame
-   above it only ever animates its clip-path mask.
-   `will-change` is applied by the timeline only while the section is active —
-   five permanently-promoted full-viewport layers is a lot of GPU memory to hold
-   for a section the visitor spends most of the page nowhere near. */
-.journey.is-playing .journey__media .media__inner {
-  will-change: transform;
-}
+/* No blanket `will-change` here. Promoting all five full-viewport images at
+   once cost five composited layers for the whole pin; the timeline now promotes
+   exactly the two frames involved in the current transition and releases them
+   again. Responsibilities:
+     .journey__media       clip-path, visibility, autoAlpha
+     .journey__media .media__inner   transform only
+     .journey__scrim       opacity only  */
 
 .journey__media img {
   object-fit: cover;
@@ -960,8 +959,9 @@
   object-position: var(--frame-from, 50% 50%);
 }
 
-.journey__media::before {
-  content: '';
+/* A real element rather than a pseudo, so its opacity is addressable
+   independently of the image transform it sits above. */
+.journey__scrim {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -1402,12 +1402,17 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 34vw;
+  /* Wide enough to cover the seam, narrow enough that the scene still reads.
+     With the two soft edges the perceived dark footprint is ~23vw, not ~46vw.
+     The floor is 5rem rather than 8rem so a 390px phone lands at ~20vw instead
+     of ~33vw — the brief's stated target is the footprint, not the literal
+     minimum. */
+  width: clamp(5rem, 18vw, 18rem);
   z-index: 5;
   pointer-events: none;
   /* Parked off the left edge until the timeline drives it. */
-  transform: translateX(-100%);
-  background-color: var(--color-ink);
+  transform: translateX(-150%);
+  background-color: rgb(16 15 14 / 0.94);
   display: grid;
   place-items: center;
 }
@@ -1420,19 +1425,19 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: clamp(2rem, 6vw, 6rem);
+  width: clamp(1rem, 2.5vw, 2.5rem);
 }
 
 .night__shutter::before {
   left: 0;
   transform: translateX(-100%);
-  background: linear-gradient(to right, rgb(16 15 14 / 0) 0%, var(--color-ink) 100%);
+  background: linear-gradient(to right, rgb(16 15 14 / 0) 0%, rgb(16 15 14 / 0.94) 100%);
 }
 
 .night__shutter::after {
   right: 0;
   transform: translateX(100%);
-  background: linear-gradient(to left, rgb(16 15 14 / 0) 0%, var(--color-ink) 100%);
+  background: linear-gradient(to left, rgb(16 15 14 / 0) 0%, rgb(16 15 14 / 0.94) 100%);
 }
 
 .night__shutter-rule {
@@ -1765,6 +1770,7 @@ html.lenis body {
     aspect-ratio: 16 / 10;
     clip-path: none !important;
     opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .journey__caption {

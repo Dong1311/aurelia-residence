@@ -111,16 +111,30 @@
   border-width: 0;
 }
 
-/* Film grain — generated inline, never downloaded. */
+/* Film grain.
+   Previously an inline SVG `feTurbulence` composited through
+   `mix-blend-mode: overlay`. On a fixed full-viewport layer that forced the
+   compositor to re-blend the entire page every frame and was — by measurement —
+   the single largest source of scroll jank (p50 20.8ms → 6.9ms with it off).
+   It is now a small pre-rendered tile drawn with ordinary alpha blending: one
+   static composited layer, no filter, no blend mode. */
 .grain {
   position: fixed;
   inset: 0;
   z-index: 90;
   pointer-events: none;
-  opacity: 0.13;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
+  opacity: 0.045;
+  background-image: url('/grain.webp');
+  background-repeat: repeat;
+  background-size: 96px 96px;
+}
+
+/* Decorative only — dropped where the compositing budget is tightest, and for
+   anyone who has asked for less motion. */
+@media (max-width: 1023.98px), (prefers-reduced-motion: reduce) {
+  .grain {
+    display: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -250,16 +264,19 @@
     background-color 0.5s var(--ease-quiet);
 }
 
+/* No `backdrop-filter`. A continuously blurred backdrop on a fixed bar forces
+   the compositor to re-read and re-blur the content behind it every frame, and
+   it sits over pinned full-screen sections for most of the page. A near-opaque
+   background reads the same and costs one flat layer. */
 .site-header[data-scrolled='true'] {
   color: var(--color-charcoal);
-  background-color: color-mix(in srgb, var(--color-ivory) 86%, transparent);
-  backdrop-filter: saturate(1.1) blur(6px);
+  background-color: color-mix(in srgb, var(--color-ivory) 96%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--color-charcoal) 10%, transparent);
 }
 
 .site-header[data-invert='true'] {
   color: var(--color-ivory);
-  background-color: color-mix(in srgb, var(--color-ink) 52%, transparent);
+  background-color: color-mix(in srgb, var(--color-ink) 82%, transparent);
   border-bottom-color: color-mix(in srgb, var(--color-ivory) 12%, transparent);
 }
 
@@ -573,18 +590,26 @@
   background-color: var(--color-ivory);
 }
 
-/* The travelling shared frame: its box is animated full-bleed → portrait slot,
-   and the cover image inside re-fits without distortion as the aspect changes. */
+/* The travelling shared frame.
+   The frame's BOX never changes: it stays pinned to the stage and its visible
+   window is driven by `clip-path`, while the photography inside is moved by a
+   uniform transform. Animating width/height/top/left instead forced a layout of
+   this subtree on every scrubbed frame; clip-path + transform keeps it to paint
+   and compositing. */
 .intro__frame {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   overflow: hidden;
   z-index: 2;
+  clip-path: inset(0px 0px 0px 0px);
+}
+
+/* The only transformed layer. Promoted by the timeline while the intro is
+   active and released afterwards. */
+.intro__frame-inner {
+  position: absolute;
+  inset: 0;
   background-color: var(--color-ink);
-  will-change: width, height, top, left;
 }
 
 .intro__exterior,
@@ -598,9 +623,12 @@
   object-position: 50% 46%;
 }
 
+/* Centred: the shared-element transform maps the stage's cover-fit onto the
+   slot's cover-fit about the centre, so the destination framing must be
+   centred for the two to agree exactly. */
 .intro__interior img {
   object-fit: cover;
-  object-position: 52% 42%;
+  object-position: 50% 50%;
 }
 
 .intro__scrim {
@@ -918,8 +946,11 @@
 }
 
 /* The inner wrapper is the only transformed layer (scale + drift); the frame
-   above it only ever animates its clip-path mask. */
-.journey__media .media__inner {
+   above it only ever animates its clip-path mask.
+   `will-change` is applied by the timeline only while the section is active —
+   five permanently-promoted full-viewport layers is a lot of GPU memory to hold
+   for a section the visitor spends most of the page nowhere near. */
+.journey.is-playing .journey__media .media__inner {
   will-change: transform;
 }
 
@@ -1074,7 +1105,9 @@
   gap: clamp(1.5rem, 4vw, 3.5rem);
   white-space: nowrap;
   width: max-content;
-  will-change: transform;
+  /* No permanent `will-change`: this track is several viewports wide and would
+     hold a correspondingly large composited layer for the whole page. GSAP
+     promotes it while the tween is actually running. */
 }
 
 .marquee__track span {
@@ -1336,11 +1369,12 @@
   z-index: 1;
 }
 
-/* The night plate is hidden until the shutter is closed over it, then swapped
-   in behind the panel — no visible boundary between the two buildings. */
+/* The night plate is unmasked from the left as the shutter travels, so it is
+   revealed rather than swapped. Hidden by clip, never by opacity, so there is
+   no frame in which neither photograph is painted. */
 .night__layer--night {
   z-index: 3;
-  opacity: 0;
+  clip-path: inset(0% 100% 0% 0%);
 }
 
 .night__layer img {
@@ -1358,24 +1392,53 @@
   background-color: var(--color-ink);
 }
 
-/* The architectural shutter: a solid ink panel that covers the frame while the
-   image is swapped, then retracts to reveal night. */
+/* The architectural shutter: a NARROW vertical bar that travels horizontally
+   across the frame. It is only ever wide enough to cover the seam between the
+   two buildings — the viewport always keeps visible photographic content, so
+   the transition can never produce a black frame. `will-change` is applied by
+   the timeline while the section is active and released afterwards. */
 .night__shutter {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 34vw;
   z-index: 5;
   pointer-events: none;
-  transform: translateY(-102%);
+  /* Parked off the left edge until the timeline drives it. */
+  transform: translateX(-100%);
   background-color: var(--color-ink);
   display: grid;
   place-items: center;
-  will-change: transform;
+}
+
+/* Softened vertical edges, so the bar reads as a moving architectural fin
+   rather than a hard rectangle sliding over the photograph. */
+.night__shutter::before,
+.night__shutter::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(2rem, 6vw, 6rem);
+}
+
+.night__shutter::before {
+  left: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(to right, rgb(16 15 14 / 0) 0%, var(--color-ink) 100%);
+}
+
+.night__shutter::after {
+  right: 0;
+  transform: translateX(100%);
+  background: linear-gradient(to left, rgb(16 15 14 / 0) 0%, var(--color-ink) 100%);
 }
 
 .night__shutter-rule {
-  width: min(60%, 30rem);
-  height: 1px;
-  background-color: color-mix(in srgb, var(--color-ivory) 30%, transparent);
+  width: 1px;
+  height: min(46%, 22rem);
+  background-color: color-mix(in srgb, var(--color-ivory) 26%, transparent);
 }
 
 .night__scrim {
@@ -1733,7 +1796,11 @@ html.lenis body {
     display: none;
   }
 
+  /* The night plate is clipped away by default and unmasked by the timeline;
+     with no timeline running it has to be released explicitly, or the section
+     would render empty (the daylight plate is hidden here). */
   .night__layer--night {
+    clip-path: none !important;
     opacity: 1 !important;
     visibility: visible !important;
   }

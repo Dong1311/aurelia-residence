@@ -73,7 +73,11 @@ export function SpatialJourney() {
           /* -- driver --------------------------------------------------- */
 
           // Scroll length per room. A phone gets roughly half a desktop's travel.
-          const perChapter = isDesktop ? 100 : isMobile ? 55 : 78
+          const perChapter = isDesktop
+            ? J.perChapterDesktop
+            : isMobile
+              ? J.perChapterMobile
+              : J.perChapterTablet
           const setFill = gsap.quickSetter(fill, 'scaleX')
           // The time at which each room becomes active — filled as we build, read
           // by onUpdate to flip the tick in lockstep with the room name.
@@ -91,6 +95,10 @@ export function SpatialJourney() {
               scrub: SCRUB.pinned,
               invalidateOnRefresh: true,
               refreshPriority: 2,
+              // Promote the five image layers only while the journey is in
+              // play; holding five full-viewport composited layers for the
+              // whole page is a lot of GPU memory for nothing.
+              onToggle: (self) => root.classList.toggle('is-playing', self.isActive),
               onUpdate: (self) => {
                 const tl = self.animation as gsap.core.Timeline | undefined
                 if (!tl) return
@@ -211,6 +219,7 @@ export function SpatialJourney() {
 
           return () => {
             setFill(0)
+            root.classList.remove('is-playing')
             ticks.forEach((tick, index) =>
               tick.setAttribute('data-active', index === 0 ? 'true' : 'false'),
             )

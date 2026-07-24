@@ -2,16 +2,19 @@
 
 import Lenis from 'lenis'
 import { useEffect, type ReactNode } from 'react'
-import { gsap, ScrollTrigger, MEDIA } from '@/lib/gsap'
+import { gsap, ScrollTrigger } from '@/lib/gsap'
 
 /**
- * The single smooth-scroll system on the page.
+ * Pointer-driven desktop gets Lenis; everything else scrolls natively.
  *
- * Lenis drives the scroll position and ScrollTrigger reads it — ScrollSmoother
- * is deliberately absent, because two smoothing layers fight each other. Lenis
- * is skipped entirely under `prefers-reduced-motion`, where native scrolling is
- * both faster and what the visitor asked for.
+ * Lenis only earns its keep where the input is a wheel: a mouse wheel arrives in
+ * coarse notches and benefits from interpolation. Touch scrolling is already
+ * smooth and momentum-based, and hijacking it costs a frame budget on exactly
+ * the devices with the least to spare — so it is left alone. ScrollSmoother is
+ * deliberately absent; two smoothing layers fight each other.
  */
+const LENIS_QUERY =
+  '(min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)'
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement
@@ -28,8 +31,8 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     }
     window.addEventListener('load', onLoad)
 
-    /* -- reduced motion: native scrolling, no Lenis ------------------ */
-    if (window.matchMedia(MEDIA.reduced).matches) {
+    /* -- native scrolling everywhere but pointer-driven desktop ------- */
+    if (!window.matchMedia(LENIS_QUERY).matches) {
       return () => {
         window.removeEventListener('load', onLoad)
       }
@@ -37,20 +40,23 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
 
     /* -- Lenis ------------------------------------------------------- */
     const lenis = new Lenis({
-      // A light lerp keeps the page responsive; heavier smoothing reads as lag.
-      lerp: 0.11,
+      // 0.16 measured as the least delayed value that still reads as controlled:
+      // 0.11 was noticeably floaty behind the cursor, 0.20+ tracks the wheel so
+      // closely that the interpolation stops earning its place.
+      lerp: 0.16,
       wheelMultiplier: 1,
       smoothWheel: true,
-      // Native touch scrolling is left alone — it is already smooth and
-      // hijacking it breaks momentum and accessibility gestures.
+      // Touch is native — see the note above.
       syncTouch: false,
     })
 
     lenis.on('scroll', ScrollTrigger.update)
 
+    // GSAP drives Lenis's rAF. Default lag smoothing is deliberately left in
+    // place: disabling it lets a single long frame translate into a large
+    // scroll jump instead of being absorbed.
     const tick = (time: number) => lenis.raf(time * 1000)
     gsap.ticker.add(tick)
-    gsap.ticker.lagSmoothing(0)
 
     /* -- keep in-page anchors working -------------------------------- */
     const onAnchorClick = (event: MouseEvent) => {
@@ -91,7 +97,6 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('click', onAnchorClick, true)
       window.removeEventListener('load', onLoad)
       gsap.ticker.remove(tick)
-      gsap.ticker.lagSmoothing(500, 33)
       lenis.destroy()
       root.classList.remove('lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped')
     }

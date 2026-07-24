@@ -42,8 +42,12 @@ export const JOURNEY = {
   passage: 1.2, // mask reveal + the incoming image's single scale-in
   arrivalAt: 0.62, // caption + tick flip at 62% of the passage (>60% revealed)
   holdFinal: 0.9, // the last room holds before the pin releases
-  incomingScale: 1.06, // incoming image starts here and settles to 1
-  drift: 2.4, // yPercent settle drift within a room
+  incomingScale: 1.04, // incoming image starts here and settles to 1
+  drift: 1.8, // yPercent settle drift within a room
+  /** Scroll distance per room, as a percentage of the viewport. */
+  perChapterDesktop: 74,
+  perChapterTablet: 62,
+  perChapterMobile: 46,
 } as const
 
 /** Hero → Statement continuous shared-element sequence. */
@@ -64,11 +68,25 @@ export const GALLERY = {
   parallaxMax: 5, // drift speeds live in the 3–5 band now (was 6–9)
 } as const
 
-/** Night closing — an architectural shutter hides the change of building. */
+/**
+ * Night closing — a narrow architectural shutter travels horizontally and hides
+ * only the seam between the two (different) buildings.
+ *
+ * The shutter never covers the viewport: photographic content is visible at
+ * every point of the transition, so there is no black frame. The dim pass over
+ * the daylight plate peaks well below 1 and is explicitly returned to 0, so the
+ * overlay can never sit on top of the finished night scene.
+ */
 export const NIGHT = {
-  darken: 0.5, // the daylight scene is dimmed first
-  shutter: 1, // the dark panel travels across (cover, then uncover)
-  nightScaleFrom: 1.05, // night image settles from here as it is revealed
-  copyAt: 0.72, // heading + CTA arrive once night is mostly established
-  holdFinal: 0.8,
+  dimTo: 0.42, // how far the daylight plate dims — never to black
+  dimIn: 0.35, // duration of the dim-in
+  shutter: 1.6, // the bar's full travel, left edge → right edge
+  shutterWidth: 0.34, // fraction of stage width (34vw, inside the 28–40vw band)
+  nightScaleFrom: 1.05, // the night image settles from here to 1
+  copyAt: 0.8, // heading + CTA once the night image is mostly visible
+  holdFinal: 0.6,
+  /** Pin distance as a percentage of the viewport. */
+  pinDesktop: 90,
+  pinTablet: 80,
+  pinMobile: 66,
 } as const

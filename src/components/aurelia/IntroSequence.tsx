@@ -63,6 +63,7 @@ export function IntroSequence() {
   const scope = useRef<HTMLElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
   const slotRef = useRef<HTMLDivElement>(null)
 
   useGSAP(
@@ -90,18 +91,56 @@ export function IntroSequence() {
           const { isDesktop, isMobile } = (context.conditions ?? {}) as Conditions
           const stage = stageRef.current
           const frame = frameRef.current
+          const inner = innerRef.current
           const slot = slotRef.current
-          if (!stage || !frame || !slot) return
+          if (!stage || !frame || !inner || !slot) return
 
           const I = INTRO
 
-          // Live destination box: the statement's portrait frame, in stage
-          // coordinates. Read through functions so `invalidateOnRefresh` re-fits
-          // it after any resize or pin re-measure.
-          const destTop = () => slot.getBoundingClientRect().top - stage.getBoundingClientRect().top
-          const destLeft = () => slot.getBoundingClientRect().left - stage.getBoundingClientRect().left
-          const destWidth = () => slot.getBoundingClientRect().width
-          const destHeight = () => slot.getBoundingClientRect().height
+          /* -- shared-element geometry ---------------------------------
+             The frame's box never changes. Its visible window is a clip-path,
+             and the photography inside is moved by ONE uniform transform.
+
+             A cover-fitted image is always drawn at `scale × source`, so moving
+             between two cover-fits (the stage, then the slot) is always a
+             uniform scale plus a translation — no distortion, and no layout.
+             Every value is read through a function so `invalidateOnRefresh`
+             re-measures it after a resize or a pin re-measure. */
+
+          const dest = () => {
+            const s = slot.getBoundingClientRect()
+            const t = stage.getBoundingClientRect()
+            return { left: s.left - t.left, top: s.top - t.top, width: s.width, height: s.height }
+          }
+
+          // Source aspect of the travelling photograph (both plates are 2:3).
+          const ratio = () => {
+            const img = inner.querySelector<HTMLImageElement>('.intro__interior img')
+            return img && img.naturalWidth > 0 ? img.naturalWidth / img.naturalHeight : 2 / 3
+          }
+
+          // Cover scale for a box, up to the shared 1/sourceHeight factor.
+          const cover = (w: number, h: number, r: number) => Math.max(w / r, h)
+
+          const scaleTo = () => {
+            const d = dest()
+            const r = ratio()
+            return cover(d.width, d.height, r) / cover(stage.clientWidth, stage.clientHeight, r)
+          }
+          const xTo = () => {
+            const d = dest()
+            return d.left + d.width / 2 - stage.clientWidth / 2
+          }
+          const yTo = () => {
+            const d = dest()
+            return d.top + d.height / 2 - stage.clientHeight / 2
+          }
+          const clipTo = () => {
+            const d = dest()
+            const right = stage.clientWidth - (d.left + d.width)
+            const bottom = stage.clientHeight - (d.top + d.height)
+            return `inset(${d.top}px ${right}px ${bottom}px ${d.left}px)`
+          }
 
           gsap.set('.intro__interior', { clipPath: CLIP.hiddenBottom })
 
@@ -116,30 +155,33 @@ export function IntroSequence() {
               scrub: SCRUB.pinned,
               invalidateOnRefresh: true,
               refreshPriority: 4,
+              // Promote the moving layer only while the intro is in play, then
+              // release it — no permanently-composited full-screen layer.
+              onToggle: (self) => {
+                inner.style.willChange = self.isActive ? 'transform' : 'auto'
+              },
             },
           })
 
           // 0 → holdOpen: the hero holds full-bleed (no tween touches the frame).
           const reframeAt = I.holdOpen
 
-          // Reframe: the frame's box travels from full-bleed to the portrait slot.
-          // Its cover image re-fits without distortion as the aspect changes.
+          // Reframe, part 1 — the visible window contracts to the slot rect.
+          // clip-path is paint-only; the old width/height/top/left animation
+          // forced a layout of this subtree on every scrubbed frame.
           timeline.fromTo(
             frame,
-            {
-              top: 0,
-              left: 0,
-              width: () => stage.clientWidth,
-              height: () => stage.clientHeight,
-            },
-            {
-              top: destTop,
-              left: destLeft,
-              width: destWidth,
-              height: destHeight,
-              ease: EASE.frame,
-              duration: I.reframe,
-            },
+            { clipPath: 'inset(0px 0px 0px 0px)' },
+            { clipPath: clipTo, ease: EASE.frame, duration: I.reframe },
+            reframeAt,
+          )
+
+          // Reframe, part 2 — the photography inside travels to the slot with a
+          // single uniform scale + translate.
+          timeline.fromTo(
+            inner,
+            { x: 0, y: 0, scale: 1 },
+            { x: xTo, y: yTo, scale: scaleTo, ease: EASE.frame, duration: I.reframe },
             reframeAt,
           )
 
@@ -199,23 +241,27 @@ export function IntroSequence() {
       <div className="intro__stage" ref={stageRef}>
         {/* The travelling shared frame — full-bleed, then the portrait slot. */}
         <div className="intro__frame" ref={frameRef}>
-          <Media
-            className="intro__exterior"
-            motion
-            priority
-            quality={86}
-            signalReady
-            src={imageSrc('exterior-day')}
-            alt={imageAlt('exterior-day')}
-            sizes="100vw"
-          />
-          <Media
-            className="intro__interior"
-            motion
-            src={imageSrc('living-room-editorial')}
-            alt={imageAlt('living-room-editorial')}
-            sizes="(min-width: 60rem) 45vw, 100vw"
-          />
+          {/* The only transformed layer — the frame above it just changes its
+              clip window, so neither element ever animates layout. */}
+          <div className="intro__frame-inner" ref={innerRef}>
+            <Media
+              className="intro__exterior"
+              motion
+              priority
+              quality={86}
+              signalReady
+              src={imageSrc('exterior-day')}
+              alt={imageAlt('exterior-day')}
+              sizes="100vw"
+            />
+            <Media
+              className="intro__interior"
+              motion
+              src={imageSrc('living-room-editorial')}
+              alt={imageAlt('living-room-editorial')}
+              sizes="(min-width: 60rem) 45vw, 100vw"
+            />
+          </div>
         </div>
 
         {/* Hero title contrast scrim (fades as the frame reframes). */}

@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+build/
+.cache/
+.DS_Store
+*.pem
+.env
+.env.local
+.env*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
+# Note: the processed images under public/images/ (plus manifest.json and
+# image-credits.json) ARE committed to this repository, so a fresh clone renders
+# fully without a network step. They are all regenerable with `pnpm assets:fetch`
+# — the pipeline overwrites them deterministically from the manifest.
+
+# Local inspection artefacts
+/.playwright-mcp/
+*.local.*

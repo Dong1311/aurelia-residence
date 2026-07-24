@@ -1,0 +1,1472 @@
+/* ==========================================================================
+   AURELIA — House of Light
+   Editorial layout primitives and scene styles.
+   Tailwind supplies the reset and the theme tokens; everything structural for
+   the scroll experience lives here so the components stay readable.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Primitives
+   -------------------------------------------------------------------------- */
+
+.shell {
+  width: 100%;
+  max-width: 96rem;
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+.shell--wide {
+  max-width: 110rem;
+}
+
+.rule {
+  height: 1px;
+  border: 0;
+  background-color: color-mix(in srgb, var(--color-charcoal) 16%, transparent);
+}
+
+.is-dark .rule {
+  background-color: color-mix(in srgb, var(--color-ivory) 22%, transparent);
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: clamp(0.625rem, 0.58rem + 0.2vw, 0.7rem);
+  font-weight: 400;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+}
+
+.is-dark .eyebrow {
+  color: color-mix(in srgb, var(--color-ivory) 62%, transparent);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 300;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+}
+
+.display--xl {
+  font-size: clamp(3rem, 1.2rem + 9vw, 10.5rem);
+}
+
+.display--lg {
+  font-size: clamp(2.25rem, 1.1rem + 5.4vw, 6rem);
+}
+
+.display--md {
+  font-size: clamp(1.75rem, 1.2rem + 2.6vw, 3.25rem);
+}
+
+.display em {
+  font-style: italic;
+  font-weight: 300;
+}
+
+.prose-note {
+  font-size: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  line-height: 1.7;
+  color: var(--color-graphite);
+  max-width: 42ch;
+}
+
+.is-dark .prose-note {
+  color: color-mix(in srgb, var(--color-ivory) 68%, transparent);
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 200;
+  transform: translateY(-120%);
+  padding: 0.75rem 1.25rem;
+  background-color: var(--color-charcoal);
+  color: var(--color-ivory);
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: transform 0.2s var(--ease-quiet);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline-color: var(--color-ivory);
+  outline-offset: -6px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Film grain — generated inline, never downloaded. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.13;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Media frames
+   The gradient below is the graceful fallback: if an asset is missing after
+   `pnpm assets:fetch`, the frame still reads as a composed surface.
+   -------------------------------------------------------------------------- */
+
+.media {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(
+    155deg,
+    var(--color-ivory-deep) 0%,
+    var(--color-bone) 42%,
+    var(--color-sand) 78%,
+    var(--color-clay) 100%
+  );
+}
+
+.media img {
+  opacity: 0;
+  transition: opacity 0.9s var(--ease-quiet);
+  /* One shared grade unifies eight photographs from eight photographers. */
+  filter: saturate(0.82) contrast(1.03) brightness(1.01);
+}
+
+.media[data-loaded='true'] img {
+  opacity: 1;
+}
+
+.media--night img {
+  filter: saturate(0.68) contrast(1.06) brightness(0.82);
+}
+
+/* Warm ivory veil, so interiors sit in the same light as the page. */
+.media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-color: color-mix(in srgb, var(--color-sand) 100%, transparent);
+  opacity: 0.09;
+  mix-blend-mode: multiply;
+}
+
+.media--night::after {
+  background-color: var(--color-pool-deep);
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+}
+
+/* --------------------------------------------------------------------------
+   3. Preloader
+   -------------------------------------------------------------------------- */
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-content: center;
+  gap: 1.75rem;
+  background-color: var(--color-ivory);
+}
+
+.preloader[hidden] {
+  display: none;
+}
+
+.preloader__mark {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.2rem + 1.6vw, 2.25rem);
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  color: var(--color-charcoal);
+}
+
+.preloader__bar {
+  width: min(14rem, 42vw);
+  height: 1px;
+  background-color: color-mix(in srgb, var(--color-charcoal) 18%, transparent);
+  overflow: hidden;
+}
+
+.preloader__fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0.04);
+  transform-origin: left center;
+  background-color: var(--color-charcoal);
+}
+
+/* --------------------------------------------------------------------------
+   4. Header
+   -------------------------------------------------------------------------- */
+
+.site-header {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1rem, 2.2vw, 1.75rem) var(--spacing-gutter);
+  color: var(--color-ivory);
+  transition:
+    color 0.5s var(--ease-quiet),
+    background-color 0.5s var(--ease-quiet);
+}
+
+.site-header[data-scrolled='true'] {
+  color: var(--color-charcoal);
+  background-color: color-mix(in srgb, var(--color-ivory) 86%, transparent);
+  backdrop-filter: saturate(1.1) blur(6px);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-charcoal) 10%, transparent);
+}
+
+.site-header[data-invert='true'] {
+  color: var(--color-ivory);
+  background-color: color-mix(in srgb, var(--color-ink) 52%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--color-ivory) 12%, transparent);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(1.0625rem, 0.95rem + 0.55vw, 1.375rem);
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.wordmark small {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  opacity: 0.72;
+  margin-top: 0.3rem;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2vw, 2.25rem);
+}
+
+.site-nav a {
+  position: relative;
+  font-size: clamp(0.6875rem, 0.66rem + 0.12vw, 0.75rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding-block: 0.35rem;
+}
+
+.site-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.45s var(--ease-quiet);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-nav a:hover::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+}
+
+.site-nav a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* The third and fourth links are noise on a narrow phone. */
+@media (max-width: 30rem) {
+  .site-nav a[data-secondary='true'] {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Hero
+   -------------------------------------------------------------------------- */
+
+/* Deliberately unsized: ScrollTrigger inserts a pin spacer around
+   `.hero__viewport`, and the section has to be free to grow by the pin
+   distance. Giving `.hero` a fixed height silently swallows the whole pinned
+   sequence. */
+.hero {
+  position: relative;
+}
+
+.hero__viewport {
+  position: relative;
+  height: 100svh;
+  min-height: 34rem;
+  overflow: hidden;
+  /* Revealed as the photograph contracts, so the hero resolves onto the same
+     ivory page the next section is printed on. */
+  background-color: var(--color-ivory);
+}
+
+.hero__frame {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0% 0% 0% 0%);
+}
+
+.hero__media {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.hero__media img {
+  object-fit: cover;
+  object-position: 50% 46%;
+}
+
+/* The hero photograph is a white building under a bright sky, so the ivory
+   title needs a real scrim underneath it, not a decorative one. Three stacked
+   layers land the composite at roughly 45% black where the two title lines sit,
+   which keeps the large display type above the 3:1 contrast floor while leaving
+   the centre of the frame open. */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      105deg,
+      rgb(16 15 14 / 0.3) 0%,
+      rgb(16 15 14 / 0) 55%,
+      rgb(16 15 14 / 0.22) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgb(16 15 14 / 0.42) 0%,
+      rgb(16 15 14 / 0.06) 42%,
+      rgb(16 15 14 / 0.18) 72%,
+      rgb(16 15 14 / 0.62) 100%
+    ),
+    rgb(16 15 14 / 0.22);
+}
+
+.hero__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.hero__grid span {
+  display: block;
+  /* Charcoal reads on both the photograph and the ivory surround it contracts
+     onto; ivory would disappear against the latter. */
+  border-left: 1px solid color-mix(in srgb, var(--color-charcoal) 26%, transparent);
+  transform: scaleY(0);
+  transform-origin: top center;
+  opacity: 0;
+}
+
+.hero__grid span:first-child {
+  border-left: 0;
+}
+
+.hero__content {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: calc(clamp(1rem, 2.2vw, 1.75rem) + 4.5rem) var(--spacing-gutter)
+    clamp(1.5rem, 3.5vw, 3rem);
+  color: var(--color-ivory);
+}
+
+.hero__title {
+  align-self: center;
+  display: grid;
+  gap: clamp(0.1rem, 0.6vw, 0.6rem);
+  margin: 0;
+  /* Holds the right-aligned line off the edge. Applied to the grid rather than
+     to the line, so it cannot fight the line's own padding. */
+  padding-inline-end: clamp(0rem, 3vw, 4rem);
+}
+
+.hero__line {
+  display: block;
+  line-height: 0.86;
+  text-transform: none;
+  /* A soft elliptical plate travels with each line. The building behind is
+     near-white, and the page scrim alone cannot carry ivory display type over
+     it; this lands the pairing comfortably past 4.5:1 without flattening the
+     photograph everywhere else. The negative margin cancels the padding so the
+     plate costs no layout. */
+  padding: 0.14em 0.55em 0.22em;
+  margin: -0.14em -0.55em -0.22em;
+  background: radial-gradient(
+    ellipse 74% 62% at 50% 54%,
+    rgb(16 15 14 / 0.42) 0%,
+    rgb(16 15 14 / 0.24) 52%,
+    rgb(16 15 14 / 0) 84%
+  );
+}
+
+.hero__line--a {
+  justify-self: start;
+}
+
+.hero__line--b {
+  justify-self: end;
+  font-style: italic;
+}
+
+/* Sits under the contracted plate, on the ivory surround — no transform, so
+   GSAP owns the element's transform outright. */
+.hero__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(1.5rem, 5vh, 3rem);
+  margin: 0;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  color: var(--color-graphite);
+}
+
+.hero__foot {
+  display: grid;
+  gap: 1.5rem;
+  align-items: end;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .hero__foot {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.hero__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem clamp(1rem, 4vw, 3.5rem);
+  margin: 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-ivory) 24%, transparent);
+  padding-top: clamp(0.9rem, 2vw, 1.4rem);
+}
+
+@media (min-width: 48rem) {
+  .hero__meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.hero__meta dt {
+  font-size: 0.625rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.66;
+  margin-bottom: 0.35rem;
+}
+
+.hero__meta dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.375rem);
+  line-height: 1.1;
+}
+
+.hero__cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  justify-self: start;
+}
+
+@media (min-width: 48rem) {
+  .hero__cue {
+    justify-self: end;
+  }
+}
+
+.hero__cue i {
+  display: block;
+  width: 3.5rem;
+  height: 1px;
+  background-color: currentColor;
+  transform-origin: left center;
+  animation: cue-draw 2.6s var(--ease-quiet) infinite;
+}
+
+@keyframes cue-draw {
+  0%,
+  100% {
+    transform: scaleX(0.25);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. Statement
+   -------------------------------------------------------------------------- */
+
+.statement {
+  position: relative;
+  padding-block: var(--spacing-chapter);
+  background-color: var(--color-ivory);
+}
+
+.statement__grid {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 5rem);
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 60rem) {
+  .statement__grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(3rem, 7vw, 8rem);
+  }
+}
+
+.statement__head {
+  position: relative;
+}
+
+@media (min-width: 60rem) {
+  /* Asymmetry: the text column starts low, the image column starts high. */
+  .statement__head {
+    padding-top: clamp(2rem, 6vw, 6rem);
+  }
+}
+
+.statement__title {
+  margin: 1.75rem 0 0;
+  max-width: 16ch;
+}
+
+.statement__notes {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.25rem);
+  margin-top: clamp(2.25rem, 5vw, 3.5rem);
+  padding-top: clamp(1.5rem, 3vw, 2.25rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-charcoal) 14%, transparent);
+}
+
+@media (min-width: 40rem) {
+  .statement__notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.statement__note h3 {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+  margin: 0 0 0.6rem;
+}
+
+.statement__note p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  max-width: 34ch;
+}
+
+.statement__figure {
+  position: relative;
+  margin: 0;
+}
+
+.statement__frame {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+@media (min-width: 60rem) {
+  .statement__frame {
+    aspect-ratio: 2 / 3;
+  }
+}
+
+/* Oversized inner layer so the parallax never exposes an empty edge. */
+.statement__parallax {
+  position: absolute;
+  inset: -12% 0;
+}
+
+.statement__parallax img {
+  object-fit: cover;
+  object-position: 52% 42%;
+}
+
+.statement__figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.9rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+}
+
+/* --------------------------------------------------------------------------
+   7. Spatial journey
+   -------------------------------------------------------------------------- */
+
+.journey {
+  position: relative;
+  background-color: var(--color-ink);
+  color: var(--color-ivory);
+}
+
+.journey__stage {
+  position: relative;
+  height: 100svh;
+  min-height: 32rem;
+  overflow: hidden;
+}
+
+.journey__scenes {
+  position: absolute;
+  inset: 0;
+}
+
+.journey__chapter {
+  position: absolute;
+  inset: 0;
+}
+
+.journey__media {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  /* Each scene is revealed by lifting this mask, not by a bare cross-fade. */
+  clip-path: inset(0% 0% 0% 0%);
+}
+
+.journey__media img {
+  object-fit: cover;
+  /* Opening crop per chapter, supplied inline from `CHAPTERS[n].framing.from`. */
+  object-position: var(--frame-from, 50% 50%);
+}
+
+.journey__media::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, rgb(16 15 14 / 0.78) 0%, rgb(16 15 14 / 0.12) 42%, rgb(16 15 14 / 0) 68%),
+    linear-gradient(to right, rgb(16 15 14 / 0.55) 0%, rgb(16 15 14 / 0) 55%);
+}
+
+.journey__caption {
+  position: absolute;
+  z-index: 3;
+  left: var(--spacing-gutter);
+  right: var(--spacing-gutter);
+  bottom: clamp(4.5rem, 12vh, 8rem);
+  display: grid;
+  gap: 0.9rem;
+}
+
+@media (min-width: 60rem) {
+  .journey__caption {
+    max-width: 46rem;
+  }
+}
+
+.journey__index {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.9rem, 2vw, 1.5rem);
+}
+
+.journey__index {
+  margin: 0;
+}
+
+.journey__index span {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--color-ivory) 60%, transparent);
+}
+
+.journey__index i {
+  display: block;
+  flex: 1;
+  max-width: 6rem;
+  height: 1px;
+  background-color: color-mix(in srgb, var(--color-ivory) 34%, transparent);
+}
+
+.journey__name {
+  margin: 0;
+  font-size: clamp(2.5rem, 1.4rem + 5vw, 5.5rem);
+  line-height: 0.9;
+}
+
+.journey__lines {
+  margin: 0;
+  font-size: clamp(0.9375rem, 0.9rem + 0.35vw, 1.1875rem);
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-ivory) 80%, transparent);
+  max-width: 40ch;
+}
+
+.journey__lines span {
+  display: block;
+}
+
+.journey__progress {
+  position: absolute;
+  z-index: 4;
+  left: var(--spacing-gutter);
+  right: var(--spacing-gutter);
+  bottom: clamp(1.75rem, 5vh, 3rem);
+}
+
+.journey__track {
+  position: relative;
+  height: 1px;
+  background-color: color-mix(in srgb, var(--color-ivory) 22%, transparent);
+}
+
+.journey__fill {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-ivory);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.journey__ticks {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 0.7rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-ivory) 42%, transparent);
+}
+
+.journey__ticks li {
+  transition: color 0.4s var(--ease-quiet);
+}
+
+.journey__ticks li:last-child {
+  text-align: right;
+}
+
+.journey__ticks li[data-active='true'] {
+  color: var(--color-ivory);
+}
+
+/* --------------------------------------------------------------------------
+   8. Editorial gallery
+   -------------------------------------------------------------------------- */
+
+.gallery {
+  position: relative;
+  padding-block: var(--spacing-chapter);
+  background-color: var(--color-ivory-deep);
+  overflow: hidden;
+}
+
+.marquee {
+  overflow: hidden;
+  padding-block: clamp(1.5rem, 4vw, 3rem);
+  border-block: 1px solid color-mix(in srgb, var(--color-charcoal) 12%, transparent);
+  margin-bottom: clamp(3rem, 8vw, 6rem);
+}
+
+.marquee__track {
+  display: flex;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  white-space: nowrap;
+  width: max-content;
+  will-change: transform;
+}
+
+.marquee__track span {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.2rem + 5vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--color-clay);
+}
+
+.marquee__track span:nth-child(even) {
+  font-style: italic;
+  color: var(--color-charcoal);
+}
+
+.gallery__grid {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: start;
+}
+
+.gallery__item {
+  margin: 0;
+  position: relative;
+}
+
+.gallery__item .media {
+  overflow: hidden;
+}
+
+.gallery__item img {
+  object-fit: cover;
+  /* Per-plate crop, supplied inline so each reuse reads as a new frame. */
+  object-position: var(--plate-position, 50% 50%);
+}
+
+/* Asymmetric placement — deliberately not a uniform card grid. */
+.gallery__item--a {
+  grid-column: 1 / span 4;
+}
+.gallery__item--a .media {
+  aspect-ratio: 4 / 3;
+}
+
+.gallery__item--b {
+  grid-column: 5 / span 2;
+  margin-top: clamp(2rem, 8vw, 7rem);
+}
+.gallery__item--b .media {
+  aspect-ratio: 3 / 4;
+}
+
+.gallery__item--c {
+  grid-column: 2 / span 3;
+  margin-top: clamp(1rem, 4vw, 3rem);
+}
+.gallery__item--c .media {
+  aspect-ratio: 1 / 1;
+}
+
+.gallery__item--d {
+  grid-column: 5 / span 2;
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+}
+.gallery__item--d .media {
+  aspect-ratio: 3 / 4;
+}
+
+.gallery__item--e {
+  grid-column: 1 / span 6;
+  margin-top: clamp(1.5rem, 5vw, 4rem);
+}
+.gallery__item--e .media {
+  aspect-ratio: 21 / 9;
+}
+
+@media (max-width: 47.99rem) {
+  /* Mobile is composed, not squeezed: a simple alternating rhythm. */
+  .gallery__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1.5rem, 6vw, 2.5rem);
+  }
+  .gallery__item--a {
+    grid-column: 1 / span 4;
+  }
+  .gallery__item--b {
+    grid-column: 1 / span 3;
+    margin-top: 0;
+  }
+  .gallery__item--c {
+    grid-column: 2 / span 3;
+  }
+  .gallery__item--d {
+    grid-column: 1 / span 3;
+    margin-top: 0;
+  }
+  .gallery__item--e {
+    grid-column: 1 / span 4;
+  }
+  .gallery__item--e .media {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+.gallery__label {
+  margin-top: 0.75rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+}
+
+/* Hover is a colour shift, not a scale: GSAP owns these images' transforms for
+   the parallax, and a competing CSS transform would be overwritten mid-scroll.
+   Coarse pointers get nothing, which is correct — there is no hover there. */
+@media (hover: hover) and (pointer: fine) {
+  .gallery__item .media::after {
+    transition: opacity 0.6s var(--ease-quiet);
+  }
+  .gallery__item:hover .media::after {
+    opacity: 0;
+  }
+  .gallery__item .gallery__label {
+    transition: color 0.5s var(--ease-quiet);
+  }
+  .gallery__item:hover .gallery__label {
+    color: var(--color-charcoal);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   9. Materials
+   -------------------------------------------------------------------------- */
+
+.materials {
+  position: relative;
+  padding-block: var(--spacing-chapter);
+  background-color: var(--color-ivory);
+}
+
+.materials__grid {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 4rem);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (min-width: 60rem) {
+  .materials__grid {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: clamp(3rem, 8vw, 7rem);
+  }
+}
+
+.materials__sticky {
+  position: relative;
+}
+
+@media (min-width: 60rem) {
+  .materials__sticky {
+    position: sticky;
+    top: clamp(7rem, 16vh, 11rem);
+  }
+}
+
+.materials__list {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 4.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.material {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: clamp(1.25rem, 3vw, 2rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-charcoal) 14%, transparent);
+}
+
+@media (min-width: 40rem) {
+  .material {
+    grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.material__frame {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.material__frame img {
+  object-fit: cover;
+  /* Close crop: push in so the surface, not the room, is the subject.
+     GSAP decomposes this transform when it takes over the drift, so the scale
+     survives the parallax. */
+  object-position: var(--plate-position, 50% 50%);
+  transform: scale(var(--crop-scale, 1.8));
+  transform-origin: center;
+}
+
+.materials__title {
+  margin-top: 1.5rem;
+}
+
+.materials__lede {
+  margin-top: 1.75rem;
+}
+
+.material__body h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
+  line-height: 1;
+}
+
+.material__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.material__body p {
+  margin: 0.9rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-graphite);
+  max-width: 46ch;
+}
+
+/* --------------------------------------------------------------------------
+   10. Night closing
+   -------------------------------------------------------------------------- */
+
+.night {
+  position: relative;
+  background-color: var(--color-ink);
+  color: var(--color-ivory);
+}
+
+.night__stage {
+  position: relative;
+  height: 100svh;
+  min-height: 34rem;
+  overflow: hidden;
+}
+
+.night__layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* The daylight plate sits underneath; the night plate is wiped down over it. */
+.night__layer--night {
+  clip-path: inset(100% 0% 0% 0%);
+}
+
+.night__layer img {
+  object-fit: cover;
+  object-position: 50% 52%;
+}
+
+.night__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgb(16 15 14 / 0.55) 0%, rgb(16 15 14 / 0.1) 30%, rgb(16 15 14 / 0.72) 100%);
+}
+
+.night__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: grid;
+  align-content: end;
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+  padding: 0 var(--spacing-gutter) clamp(3rem, 9vh, 6rem);
+}
+
+.night__title {
+  margin: 0;
+  max-width: 18ch;
+}
+
+.night__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-ivory) 40%, transparent);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-ivory);
+  transition:
+    background-color 0.45s var(--ease-quiet),
+    color 0.45s var(--ease-quiet),
+    border-color 0.45s var(--ease-quiet);
+}
+
+.cta i {
+  display: block;
+  width: 1.75rem;
+  height: 1px;
+  background-color: currentColor;
+  transition: width 0.45s var(--ease-quiet);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cta:hover {
+    background-color: var(--color-ivory);
+    color: var(--color-charcoal);
+    border-color: var(--color-ivory);
+  }
+  .cta:hover i {
+    width: 2.75rem;
+  }
+}
+
+.night__disclaimer {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  /* Small text over a photograph — kept high enough for the 4.5:1 floor. */
+  color: color-mix(in srgb, var(--color-ivory) 74%, transparent);
+  max-width: 44ch;
+}
+
+/* --------------------------------------------------------------------------
+   11. Footer
+   -------------------------------------------------------------------------- */
+
+.site-footer {
+  background-color: var(--color-ink);
+  color: var(--color-ivory);
+  padding-block: clamp(3.5rem, 8vw, 6rem) clamp(2rem, 4vw, 3rem);
+}
+
+.site-footer a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-ivory) 32%, transparent);
+  text-underline-offset: 0.28em;
+  transition: text-decoration-color 0.35s var(--ease-quiet);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-footer a:hover {
+    text-decoration-color: var(--color-ivory);
+  }
+}
+
+.footer__top {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 4rem);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 48rem) {
+  .footer__top {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+}
+
+.footer__nav {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+}
+
+.footer__nav a {
+  font-size: 0.8125rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.credits-list {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-ivory) 74%, transparent);
+}
+
+.footer__lede {
+  margin-top: 1.5rem;
+}
+
+.footer__license {
+  margin-top: 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.credits-list strong {
+  font-weight: 400;
+  color: var(--color-ivory);
+}
+
+.footer__bottom {
+  display: grid;
+  gap: 1rem;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  padding-top: clamp(1.25rem, 3vw, 2rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-ivory) 16%, transparent);
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--color-ivory) 62%, transparent);
+}
+
+@media (min-width: 48rem) {
+  .footer__bottom {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   12. Credits page
+   -------------------------------------------------------------------------- */
+
+.credits-page {
+  padding-block: clamp(8rem, 18vh, 12rem) var(--spacing-chapter);
+  background-color: var(--color-ivory);
+}
+
+.credits-table {
+  display: grid;
+  gap: 0;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-charcoal) 16%, transparent);
+}
+
+.credit-row {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr);
+  padding-block: clamp(1.5rem, 3.5vw, 2.25rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-charcoal) 12%, transparent);
+}
+
+@media (min-width: 48rem) {
+  .credit-row {
+    grid-template-columns: 8rem minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.credit-row__thumb {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  max-width: 12rem;
+  overflow: hidden;
+}
+
+.credit-row__thumb img {
+  object-fit: cover;
+}
+
+.credit-row dl {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.credit-row dt {
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+}
+
+.credit-row dd {
+  margin: 0 0 0.4rem;
+  word-break: break-word;
+}
+
+.credit-row a {
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+  text-decoration-color: color-mix(in srgb, var(--color-charcoal) 30%, transparent);
+}
+
+.disclaimer-box {
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid color-mix(in srgb, var(--color-charcoal) 18%, transparent);
+  background-color: color-mix(in srgb, var(--color-bone) 40%, transparent);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  max-width: 62ch;
+}
+
+/* --------------------------------------------------------------------------
+   13. Lenis
+   -------------------------------------------------------------------------- */
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   14. Reduced motion
+   Long pins are removed in JS via gsap.matchMedia; these rules put the DOM back
+   into a plain, readable document order.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Light fades stay — they carry no motion. */
+  .media img {
+    transition: opacity 0.3s linear !important;
+  }
+
+  .hero__cue i {
+    animation: none;
+    transform: scaleX(1);
+  }
+
+  .journey__stage {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .journey__scenes {
+    position: static;
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+    padding-block: var(--spacing-chapter);
+  }
+
+  .journey__chapter {
+    position: relative;
+    inset: auto;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .journey__media {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    clip-path: none !important;
+    opacity: 1 !important;
+  }
+
+  .journey__caption {
+    position: relative;
+    inset: auto;
+    bottom: auto;
+    padding-inline: var(--spacing-gutter);
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .journey__progress {
+    display: none;
+  }
+
+  .night__stage {
+    height: auto;
+    min-height: 0;
+  }
+
+  .night__layer {
+    position: relative;
+    aspect-ratio: 16 / 9;
+  }
+
+  .night__layer--day {
+    display: none;
+  }
+
+  .night__layer--night {
+    clip-path: none !important;
+  }
+
+  .night__content {
+    position: relative;
+    padding-block: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .marquee__track {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .hero__grid {
+    display: none;
+  }
+}

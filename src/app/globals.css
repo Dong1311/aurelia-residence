@@ -1,0 +1,94 @@
+@import 'tailwindcss';
+@import '../styles/aurelia.css';
+
+@theme {
+  /* --- palette -------------------------------------------------- */
+  --color-ivory: #f5f2eb;
+  --color-ivory-deep: #ece7dc;
+  --color-bone: #e2dbcc;
+  --color-sand: #cabda6;
+  --color-clay: #a9a091;
+  --color-graphite: #55514b;
+  --color-charcoal: #24221f;
+  --color-ink: #100f0e;
+  --color-pool: #5d8c94;
+  --color-pool-deep: #2f4c52;
+
+  /* --- type ----------------------------------------------------- */
+  --font-display: var(--font-cormorant), 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* --- rhythm --------------------------------------------------- */
+  --spacing-gutter: clamp(1.25rem, 4vw, 4.5rem);
+  --spacing-chapter: clamp(5rem, 12vw, 11rem);
+
+  /* --- motion --------------------------------------------------- */
+  --ease-quiet: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-frame: cubic-bezier(0.65, 0.02, 0.18, 1);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    /* One-pixel rules are a motif; default them to the palette. */
+    border-color: color-mix(in srgb, var(--color-charcoal) 14%, transparent);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /* Lenis is the smooth-scroll system; native smoothing is disabled when it
+       is active, and kept for the reduced-motion / no-JS path. */
+  }
+
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    font-synthesis-weight: none;
+    line-height: 1.55;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    /* The page is a vertical experience; nothing may bleed sideways. */
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    line-height: 0.95;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  img {
+    /* next/image already sets these, but stray images must not overflow. */
+    max-width: 100%;
+  }
+
+  ::selection {
+    background-color: var(--color-charcoal);
+    color: var(--color-ivory);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-charcoal);
+    outline-offset: 4px;
+    border-radius: 1px;
+  }
+
+  [data-invert='true'] :focus-visible,
+  .is-dark :focus-visible {
+    outline-color: var(--color-ivory);
+  }
+}

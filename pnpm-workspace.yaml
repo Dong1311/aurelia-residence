@@ -1,0 +1,5 @@
+# pnpm 11 reads install-time settings from this file rather than package.json.
+# Both packages ship native binaries and need their install scripts to run.
+allowBuilds:
+  sharp: true
+  unrs-resolver: true

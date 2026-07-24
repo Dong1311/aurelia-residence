@@ -10,32 +10,49 @@ interface MediaProps {
   alt: string
   sizes: string
   className?: string
+  /** Class for the inner transform wrapper — the element GSAP scales/drifts. */
+  innerClassName?: string
   imageClassName?: string
   style?: CSSProperties
   priority?: boolean
   quality?: number
   /** The hero photograph reports readiness so the preloader knows when to leave. */
   signalReady?: boolean
+  /**
+   * Motion mode. When set, the photograph carries no CSS opacity fade — GSAP is
+   * the only system that reveals it (via the frame's clip-path mask). Used by
+   * Journey, Gallery and NightClosing so a scene never fights its own load-in.
+   */
+  motion?: boolean
+}
+
+function cx(...classes: Array<string | false | undefined>): string {
+  return classes.filter(Boolean).join(' ')
 }
 
 /**
- * A framed, fill-mode `next/image`.
+ * A framed, fill-mode `next/image` with a dedicated inner transform wrapper.
  *
- * The frame carries an ivory-to-clay gradient. If an asset is missing after
- * `pnpm assets:fetch`, the gradient is what the visitor sees — a composed
- * surface rather than a broken image icon. On success the photograph fades in
- * over it, which also removes the hard pop of a late-decoding image.
+ *   .media        — the frame. Owns the clip-path mask and the gradient/veil.
+ *   .media__inner — the only element GSAP transforms (scale / x / y).
+ *
+ * Splitting the two means a scene can mask its frame and drift its image
+ * independently, without the two tweens landing on the same node. The frame's
+ * ivory-to-clay gradient is the graceful fallback if an asset is missing after
+ * `pnpm assets:fetch`.
  */
 export function Media({
   src,
   alt,
   sizes,
   className,
+  innerClassName,
   imageClassName,
   style,
   priority = false,
   quality = 82,
   signalReady = false,
+  motion = false,
 }: MediaProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [loaded, setLoaded] = useState(false)
@@ -57,22 +74,24 @@ export function Media({
   return (
     <div
       ref={frameRef}
-      className={className ? `media ${className}` : 'media'}
+      className={cx('media', motion && 'media--motion', className)}
       data-loaded={loaded ? 'true' : 'false'}
       style={style}
     >
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes={sizes}
-        priority={priority}
-        quality={quality}
-        className={imageClassName}
-        onLoad={handleSettled}
-        // A failed request must not stall the opening sequence.
-        onError={handleSettled}
-      />
+      <div className={cx('media__inner', innerClassName)}>
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          quality={quality}
+          className={imageClassName}
+          onLoad={handleSettled}
+          // A failed request must not stall the opening sequence.
+          onError={handleSettled}
+        />
+      </div>
     </div>
   )
 }

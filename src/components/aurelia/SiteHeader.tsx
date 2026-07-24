@@ -36,8 +36,9 @@ export function SiteHeader() {
       }),
     )
 
-    // The journey and the closing scene are both dark surfaces.
-    for (const selector of ['#spaces', '#nightfall']) {
+    // The intro (over its full-bleed hero), the journey and the closing scene
+    // are all dark surfaces — the header rides them as a light-on-dark bar.
+    for (const selector of ['#project', '#spaces', '#nightfall']) {
       const element = document.querySelector<HTMLElement>(selector)
       if (!element) continue
       triggers.push(

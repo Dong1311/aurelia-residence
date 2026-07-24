@@ -141,6 +141,13 @@
   );
 }
 
+/* The inner transform wrapper — GSAP's only target for scale/x/y. Kept as a
+   layout-neutral absolute fill so `next/image fill` still resolves against it. */
+.media__inner {
+  position: absolute;
+  inset: 0;
+}
+
 .media img {
   opacity: 0;
   transition: opacity 0.9s var(--ease-quiet);
@@ -150,6 +157,14 @@
 
 .media[data-loaded='true'] img {
   opacity: 1;
+}
+
+/* Motion mode: no CSS opacity fade. The photograph is always painted; GSAP's
+   clip-path mask on the frame is the single system that reveals the scene. This
+   removes the load-in fade competing with the scroll-driven reveal. */
+.media--motion img {
+  opacity: 1 !important;
+  transition: none !important;
 }
 
 .media--night img {
@@ -543,6 +558,221 @@
 }
 
 /* --------------------------------------------------------------------------
+   5b. Intro sequence — hero → statement, one shared-element transition
+   -------------------------------------------------------------------------- */
+
+.intro {
+  position: relative;
+}
+
+.intro__stage {
+  position: relative;
+  height: 100svh;
+  min-height: 34rem;
+  overflow: hidden;
+  background-color: var(--color-ivory);
+}
+
+/* The travelling shared frame: its box is animated full-bleed → portrait slot,
+   and the cover image inside re-fits without distortion as the aspect changes. */
+.intro__frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 2;
+  background-color: var(--color-ink);
+  will-change: width, height, top, left;
+}
+
+.intro__exterior,
+.intro__interior {
+  position: absolute;
+  inset: 0;
+}
+
+.intro__exterior img {
+  object-fit: cover;
+  object-position: 50% 46%;
+}
+
+.intro__interior img {
+  object-fit: cover;
+  object-position: 52% 42%;
+}
+
+.intro__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(105deg, rgb(16 15 14 / 0.3) 0%, rgb(16 15 14 / 0) 55%, rgb(16 15 14 / 0.22) 100%),
+    linear-gradient(
+      to bottom,
+      rgb(16 15 14 / 0.42) 0%,
+      rgb(16 15 14 / 0.06) 42%,
+      rgb(16 15 14 / 0.18) 72%,
+      rgb(16 15 14 / 0.62) 100%
+    ),
+    rgb(16 15 14 / 0.22);
+}
+
+.intro__hero {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: calc(clamp(1rem, 2.2vw, 1.75rem) + 4.5rem) var(--spacing-gutter)
+    clamp(1.5rem, 3.5vw, 3rem);
+  color: var(--color-ivory);
+}
+
+.intro__hero-foot {
+  display: grid;
+  gap: 1.5rem;
+  align-items: end;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .intro__hero-foot {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+/* Statement destination — sits under the frame during the hold, resolves after. */
+.intro__layout {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  padding-block: calc(clamp(1rem, 2.2vw, 1.75rem) + 4rem) clamp(1.5rem, 4vw, 3rem);
+}
+
+.intro__grid {
+  width: 100%;
+  max-width: 96rem;
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 60rem) {
+  .intro__grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(3rem, 7vw, 7rem);
+  }
+}
+
+.intro__title {
+  margin: 1.25rem 0 0;
+  max-width: 16ch;
+}
+
+.intro__notes {
+  display: grid;
+  gap: clamp(1rem, 2.2vw, 1.6rem);
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+  padding-top: clamp(1.1rem, 2.4vw, 1.75rem);
+  border-top: 1px solid color-mix(in srgb, var(--color-charcoal) 14%, transparent);
+}
+
+/* Two columns from small screens up, so the four notes occupy two rows rather
+   than four — this is what lets the completed statement fit the pinned phone
+   viewport without clipping. */
+@media (min-width: 24rem) {
+  .intro__notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.intro__note h3 {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+  margin: 0 0 0.5rem;
+}
+
+.intro__note p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  max-width: 34ch;
+}
+
+.intro__figure {
+  position: relative;
+  margin: 0;
+}
+
+.intro__slot {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  /* Landscape and short on small screens, so the copy fits beneath it inside
+     the pinned viewport. */
+  aspect-ratio: 16 / 9;
+}
+
+/* Phones and tablets lead with the figure; the copy stacks under it. */
+@media (max-width: 59.99rem) {
+  .intro__figure {
+    order: -1;
+  }
+}
+
+@media (min-width: 60rem) {
+  /* The figure shrinks to the height-capped slot and right-aligns in its
+     column, so the figcaption sits directly under the image at its width. */
+  .intro__figure {
+    width: fit-content;
+    margin-left: auto;
+  }
+  .intro__slot {
+    width: auto;
+    height: min(58svh, 30rem);
+    aspect-ratio: 2 / 3;
+  }
+}
+
+.intro__slot-media {
+  position: absolute;
+  inset: 0;
+  /* Only the reduced-motion fallback paints this; the motion path lands the
+     travelling frame over the (empty) slot instead. */
+  display: none;
+}
+
+.intro__figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.9rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+}
+
+/* Hidden until the destination frame is recognizable (JS reveals it). Kept
+   opacity-only in CSS so there is no pre-hydration flash. */
+.intro__copy {
+  opacity: 0;
+}
+
+/* --------------------------------------------------------------------------
    6. Statement
    -------------------------------------------------------------------------- */
 
@@ -687,9 +917,15 @@
   clip-path: inset(0% 0% 0% 0%);
 }
 
+/* The inner wrapper is the only transformed layer (scale + drift); the frame
+   above it only ever animates its clip-path mask. */
+.journey__media .media__inner {
+  will-change: transform;
+}
+
 .journey__media img {
   object-fit: cover;
-  /* Opening crop per chapter, supplied inline from `CHAPTERS[n].framing.from`. */
+  /* Static opening crop per chapter, from `CHAPTERS[n].framing.from`. */
   object-position: var(--frame-from, 50% 50%);
 }
 
@@ -825,6 +1061,12 @@
   padding-block: clamp(1.5rem, 4vw, 3rem);
   border-block: 1px solid color-mix(in srgb, var(--color-charcoal) 12%, transparent);
   margin-bottom: clamp(3rem, 8vw, 6rem);
+}
+
+/* When the marquee trails the grid it needs top separation, not bottom. */
+.marquee--trailing {
+  margin-top: clamp(3rem, 8vw, 6rem);
+  margin-bottom: 0;
 }
 
 .marquee__track {
@@ -1090,9 +1332,15 @@
   inset: 0;
 }
 
-/* The daylight plate sits underneath; the night plate is wiped down over it. */
+.night__layer--day {
+  z-index: 1;
+}
+
+/* The night plate is hidden until the shutter is closed over it, then swapped
+   in behind the panel — no visible boundary between the two buildings. */
 .night__layer--night {
-  clip-path: inset(100% 0% 0% 0%);
+  z-index: 3;
+  opacity: 0;
 }
 
 .night__layer img {
@@ -1100,9 +1348,40 @@
   object-position: 50% 52%;
 }
 
+/* Dim pass over the daylight scene, raised before the shutter closes. */
+.night__darken {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background-color: var(--color-ink);
+}
+
+/* The architectural shutter: a solid ink panel that covers the frame while the
+   image is swapped, then retracts to reveal night. */
+.night__shutter {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  transform: translateY(-102%);
+  background-color: var(--color-ink);
+  display: grid;
+  place-items: center;
+  will-change: transform;
+}
+
+.night__shutter-rule {
+  width: min(60%, 30rem);
+  height: 1px;
+  background-color: color-mix(in srgb, var(--color-ivory) 30%, transparent);
+}
+
 .night__scrim {
   position: absolute;
   inset: 0;
+  z-index: 4;
   pointer-events: none;
   background:
     linear-gradient(to bottom, rgb(16 15 14 / 0.55) 0%, rgb(16 15 14 / 0.1) 30%, rgb(16 15 14 / 0.72) 100%);
@@ -1110,7 +1389,7 @@
 
 .night__content {
   position: relative;
-  z-index: 2;
+  z-index: 10;
   height: 100%;
   display: grid;
   align-content: end;
@@ -1448,12 +1727,15 @@ html.lenis body {
     aspect-ratio: 16 / 9;
   }
 
-  .night__layer--day {
+  .night__layer--day,
+  .night__darken,
+  .night__shutter {
     display: none;
   }
 
   .night__layer--night {
-    clip-path: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .night__content {
@@ -1468,5 +1750,55 @@ html.lenis body {
 
   .hero__grid {
     display: none;
+  }
+
+  /* Intro: no pin, no shared-element morph. The exterior becomes a banner, the
+     interior figure sits in its slot, and every line of copy is in flow. */
+  .intro__stage {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .intro__frame {
+    position: relative;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: 62svh !important;
+    will-change: auto;
+  }
+
+  .intro__interior {
+    display: none;
+  }
+
+  .intro__scrim,
+  .intro__hero {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 62svh;
+  }
+
+  .intro__layout {
+    position: relative;
+    inset: auto;
+    padding-block: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .intro__slot {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+  }
+
+  .intro__slot-media {
+    display: block;
+  }
+
+  .intro__copy {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
   }
 }

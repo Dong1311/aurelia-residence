@@ -24,3 +24,5 @@ next-env.d.ts
 # Local inspection artefacts
 /.playwright-mcp/
 *.local.*
+
+.vercel

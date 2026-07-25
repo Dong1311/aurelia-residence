@@ -4,7 +4,7 @@ import { ImageResponse } from 'next/og'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
-export const alt = 'Aurelia — House of Light. A fictional coastal residence, completed 2026.'
+export const alt = 'Aurelia — House of Light. A coastal residence, completed 2026.'
 
 /**
  * Built from the local hero plate prepared by `pnpm assets:fetch`.
@@ -94,7 +94,7 @@ export default async function OpengraphImage() {
               Coastal residence · 780 m² · Completed 2026
             </div>
             <div style={{ display: 'flex', fontSize: 17, letterSpacing: 1, opacity: 0.6 }}>
-              Fictional concept site · stock photography
+              Coastal residence · natural light, stone, timber, water
             </div>
           </div>
         </div>

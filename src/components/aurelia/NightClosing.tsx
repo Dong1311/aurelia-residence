@@ -206,9 +206,8 @@ export function NightClosing() {
           </div>
 
           <p className="night__disclaimer night__reveal">
-            Aurelia is a fictional residence. The address above is a
-            demonstration placeholder and is not monitored — nothing sent to it
-            will reach anyone.
+            The address above is a placeholder inbox and is not currently
+            monitored.
           </p>
         </div>
       </div>

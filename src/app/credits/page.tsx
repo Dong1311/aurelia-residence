@@ -2,13 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Media } from '@/components/aurelia/Media'
 import { ASSET_MANIFEST } from '@/data/assets'
-import { PROJECT } from '@/data/chapters'
 import { imageSrc } from '@/lib/images'
 
 export const metadata: Metadata = {
   title: 'Image credits',
   description:
-    'Photography credits and licence information for the Aurelia — House of Light demonstration site.',
+    'Photography credits and licence information for Aurelia — House of Light.',
 }
 
 export default function CreditsPage() {
@@ -26,14 +25,6 @@ export default function CreditsPage() {
           . Each one is downloaded, re-encoded and served from this project&rsquo;s
           own <code>public/images</code> directory — nothing is hotlinked.
         </p>
-
-        <div className="disclaimer-box">
-          <strong>This is a fictional design demonstration.</strong> {PROJECT.disclaimer}{' '}
-          Aurelia is not a real building, a real practice or a real address, and
-          no photograph here should be read as depicting the project described on
-          the home page. The photographs are stock images of eight different
-          buildings, assembled as an art-directed narrative.
-        </div>
 
         <div className="credits-table">
           {ASSET_MANIFEST.map((asset) => (

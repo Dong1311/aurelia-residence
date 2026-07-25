@@ -3,7 +3,6 @@ import { Cormorant_Garamond, Inter } from 'next/font/google'
 import { SiteHeader } from '@/components/aurelia/SiteHeader'
 import { SiteFooter } from '@/components/aurelia/SiteFooter'
 import { SmoothScrollProvider } from '@/components/aurelia/SmoothScrollProvider'
-import { PROJECT } from '@/data/chapters'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -22,7 +21,7 @@ const inter = Inter({
 })
 
 const DESCRIPTION =
-  'Aurelia is a fictional coastal residence of 780 m², completed 2026, designed around the changing character of daylight. A scroll-driven architectural study in stone, timber, glass and water.'
+  'Aurelia — House of Light is a coastal residence of 780 m², completed 2026, designed around the changing character of daylight. A scroll-driven architectural study in stone, timber, glass and water.'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://aurelia.example'),
@@ -32,14 +31,16 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: 'Aurelia — House of Light',
-  authors: [{ name: 'Aurelia (fictional studio)' }],
+  authors: [{ name: 'Seawintech' }],
+  creator: 'Seawintech',
+  publisher: 'Seawintech',
   keywords: [
     'architecture',
     'residence',
     'editorial',
     'scroll experience',
-    'concept site',
-    'design demonstration',
+    'coastal residence',
+    'house of light',
   ],
   openGraph: {
     type: 'website',
@@ -61,9 +62,6 @@ export const metadata: Metadata = {
     follow: false,
     nocache: true,
     googleBot: { index: false, follow: false },
-  },
-  other: {
-    'x-disclaimer': PROJECT.disclaimer,
   },
 }
 

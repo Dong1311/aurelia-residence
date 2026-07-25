@@ -86,7 +86,7 @@ export const GALLERY = {
  * overlay can never sit on top of the finished night scene.
  */
 export const NIGHT = {
-  dimTo: 0.38, // how far the daylight plate dims — never to black
+  dimTo: 0.28, // how far the daylight plate dims — a light dusk, never heavy
   dimIn: 0.2, // duration of the dim-in
   maskAt: 0.18, // the night plate starts unmasking here
   mask: 0.8, // and takes this long to cross the frame

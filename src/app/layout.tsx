@@ -54,14 +54,10 @@ export const metadata: Metadata = {
     title: 'Aurelia — House of Light',
     description: DESCRIPTION,
   },
-  // This is a portfolio demonstration of a fictional project, not a real
-  // business. Keeping it out of search results avoids polluting results with a
-  // place that does not exist.
   robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-    googleBot: { index: false, follow: false },
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
   },
 }
 
